@@ -1,0 +1,50 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - pa11y-network
+
+  pa11y-webservice:
+    build:
+      context: ./pa11y-webservice
+    container_name: pa11y-webservice
+    environment:
+      - DATABASE=mongodb://mongodb:27017/pa11y
+      - PORT=3000
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    networks:
+      - pa11y-network
+
+  pa11y-dashboard:
+    build:
+      context: ./pa11y-dashboard
+    container_name: pa11y-dashboard
+    environment:
+      - WEBSERVICE=http://pa11y-webservice:3000
+      - DATABASE=mongodb://mongodb:27017/pa11y
+      - PORT=8080
+      - NODE_ENV=development
+    ports:
+      - "8080:8080"
+    depends_on:
+      - pa11y-webservice
+      - mongodb
+    networks:
+      - pa11y-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  pa11y-network:
